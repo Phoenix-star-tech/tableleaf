@@ -1,5 +1,5 @@
 // Never cache guest sessions, API responses, menus, orders or dashboard HTML.
-const CACHE = "tableleaf-shell-v1";
+const CACHE = "lovescan-shell-v4";
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches

@@ -1,6 +1,7 @@
+import { BrandLogo } from "@/components/brand-mark";
 import Link from "next/link";
 import {
-  Leaf,
+
   QrCode,
   UtensilsCrossed,
   Radio,
@@ -9,8 +10,7 @@ export default function Home() {
   return (
     <main className="landing">
       <nav className="brand">
-        <Leaf />
-        VashiBite<span className="small">BY VASHIK TECHNOLOGIES</span>
+        <BrandLogo /><span className="small">BY VASHIK TECHNOLOGIES</span>
       </nav>
       <div className="landing-grid">
         <section>
@@ -51,10 +51,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-      <footer>
-        THOUGHTFULLY MADE FOR YOUR TABLE{" "}
-        <span>Scan · Savour · Stay a little longer</span>
-      </footer>
     </main>
   );
 }

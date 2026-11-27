@@ -26,7 +26,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: Arial, "Noto Sans", sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.6;
 }
@@ -981,7 +981,7 @@ input[type="color"] {
   margin-bottom: 30px;
 }
 .desk-header h1 {
-  font-family: Arial, sans-serif;
+  font-family: var(--font-geist), system-ui, sans-serif;
   font-size: 35px;
   font-weight: 500;
   margin-top: 12px;
@@ -1829,3 +1829,23 @@ input[type="color"] {
 .ad-controls button { min-height:44px; min-width:44px; color:var(--ink); background:transparent; border:0; font-weight:600; }
 .ad-controls button:hover { background:var(--soft); }
 .menu-ad a { display:block; }
+.new-dish { margin-inline-start: 8px; padding: 2px 8px; border-radius: 12px; background: #e5f4ce; color: #305224; font-size: 11px; }
+.brand-mark { width: 32px; height: 32px; flex: none; object-fit: contain; }
+.love-wordmark {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  white-space: nowrap;
+  font-weight: 720;
+  letter-spacing: -.065em;
+  line-height: 1;
+}
+.love-wordmark i {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -.055em;
+  margin-inline-start: .025em;
+}
+.site-credit { align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 18px; text-align: center; letter-spacing: normal; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+.credit-brand { display: inline-flex; align-items: center; gap: 7px; font-size: 16px; font-weight: 700; color: var(--ink); }
+.credit-brand .brand-mark { width: 25px; height: 25px; }
+.site-credit small { font-size: 12px; }
+@media (max-width: 760px) { body:has(.mobile-cart) .site-credit { padding-bottom: 85px; } }

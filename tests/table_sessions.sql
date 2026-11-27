@@ -1,0 +1,24 @@
+begin;
+do $$ declare a uuid:=gen_random_uuid(); b uuid:=gen_random_uuid(); ownerid uuid:=gen_random_uuid(); sess uuid:=gen_random_uuid(); rid uuid; dish uuid; oid uuid; k uuid:=gen_random_uuid(); items jsonb; oldgen bigint:=0; begin
+insert into auth.users(id,email) values(ownerid,ownerid||'@example.invalid'),(a,null),(b,null);
+insert into public.restaurants(owner_id,name,slug) values(ownerid,'Check','check-'||ownerid) returning id into rid;
+insert into public.tables(restaurant_id,table_no) values(rid,1);
+insert into public.menu_items(restaurant_id,name,price) values(rid,'Test',10) returning id into dish;
+items:=jsonb_build_array(jsonb_build_object('id',dish,'quantity',1));
+perform set_config('request.jwt.claim.sub',a::text,true);perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'session_id',sess)::text,true);
+oid:=public.submit_table_order(rid,1,items,'',k,0);
+if public.submit_table_order(rid,1,items,'',k,0)<>oid or public.submit_table_order(rid,1,items,'extra',gen_random_uuid(),0)<>oid then raise exception 'wrong order';end if;
+if (select count(*) from public.order_items where order_id=oid)<>2 or (select count(*) from public.order_items where order_id=oid and is_new)<>1 then raise exception 'wrong lines';end if;
+perform set_config('request.jwt.claim.sub',b::text,true);perform set_config('request.jwt.claims',jsonb_build_object('sub',b,'session_id',gen_random_uuid())::text,true);
+if (public.table_access(rid,1)->>'allowed')::boolean then raise exception 'not blocked';end if;
+begin perform public.submit_table_order(rid,1,items,'',gen_random_uuid(),0);raise exception 'claim granted';exception when others then if sqlerrm not like '%currently occupied%' then raise;end if;end;
+begin perform public.settle_table(oid,2);raise exception 'non-owner paid';exception when others then if sqlerrm not like '%Only an owner%' then raise;end if;end;
+perform set_config('request.jwt.claim.sub',ownerid::text,true);perform set_config('request.jwt.claims',jsonb_build_object('sub',ownerid,'session_id',gen_random_uuid())::text,true);
+begin perform public.settle_table(oid,1);raise exception 'stale settlement';exception when others then if sqlerrm not like '%New items%' then raise;end if;end;
+perform public.settle_table(oid,2);
+if exists(select from public.order_items where order_id=oid) or exists(select from public.orders where id=oid and customer_id is not null) or public.table_access(rid,1)->>'status'<>'AVAILABLE' then raise exception 'cleanup failed';end if;
+perform set_config('request.jwt.claim.sub',a::text,true);perform set_config('request.jwt.claims',jsonb_build_object('sub',a,'session_id',sess)::text,true);
+begin perform public.submit_table_order(rid,1,items,'',k,0);raise exception 'stale order';exception when others then if sqlerrm not like '%session ended%' then raise;end if;end;
+perform public.submit_table_order(rid,1,items,'',gen_random_uuid(),1);
+end $$;
+rollback;

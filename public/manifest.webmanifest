@@ -1,6 +1,6 @@
 {
-  "name": "Tableleaf — Restaurant Ordering",
-  "short_name": "Tableleaf",
+  "name": "LOVEscan — Restaurant Ordering",
+  "short_name": "LOVEscan",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

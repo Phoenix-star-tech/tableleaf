@@ -1,8 +1,9 @@
 "use client";
+import BrandMark from "@/components/brand-mark";
 import MenuAds from "./menu-ads";
 import { useEffect, useRef, useState } from "react";
 import {
-  Leaf,
+
   Search,
   ShoppingBag,
   Plus,
@@ -57,6 +58,8 @@ export default function Customer({
   const key = useRef<string | null>(null),
     lock = useRef(false),
     uid = useRef("");
+  const [access, setAccess] = useState<"checking" | "allowed" | "occupied" | "ended" | "failed">(demo ? "allowed" : "checking");
+  const generation = useRef<number | null>(null);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 4500);
@@ -72,6 +75,8 @@ export default function Customer({
       return;
     }
     let active = true;
+    generation.current = null;
+    setAccess("checking");
     const client = db();
     let channel: ReturnType<typeof client.channel> | undefined;
     let poll: ReturnType<typeof setInterval> | undefined;
@@ -100,7 +105,6 @@ export default function Customer({
             .select("*")
             .eq("restaurant_id", rid)
             .eq("table_no", tableNo)
-            .eq("active", true)
             .maybeSingle(),
         ]);
         if (f.error || c.error || tb.error)
@@ -109,7 +113,7 @@ export default function Customer({
         setR(restaurant);
         setFoods(f.data || []);
         setCategories(c.data || []);
-        setValidTable(!!tb.data);
+        setValidTable(!!tb.data?.active);
         uid.current = "";
         const {
           data: { session },
@@ -122,12 +126,24 @@ export default function Customer({
         if (!active) return;
         uid.current = user?.id ?? "";
         setGuestUnavailable(!user);
-        if (tb.data && user) {
+        if (tb.data?.active && user) {
           void client.rpc("record_menu_visit", { r: rid, t: tableNo }).then(({ error }) => {
             if (error) console.warn("Menu visit could not be recorded.");
           });
         }
         async function refresh() {
+          if (tb.data) {
+            const status = await client.rpc("table_access", {r:rid,t:tableNo});
+            if (!active) return;
+            if (status.error || !status.data) {setAccess("failed");return;}
+            if (generation.current !== null && generation.current !== status.data.generation) {
+              setAccess("ended");return;
+            }
+            if (!status.data.allowed) {setAccess("occupied");return;}
+            generation.current = status.data.generation;
+          }
+          if (!active) return;
+          setAccess("allowed");
           const { o, fo, ro } = await (async () => {
             const [o, fo, ro] = await Promise.all([
               user ? client
@@ -220,7 +236,7 @@ export default function Customer({
     tax = Math.round((subtotal - discount) * Number(r?.tax_percent || 0)) / 100,
     total = subtotal - discount + tax;
   async function place() {
-    if (lock.current || !r?.is_open || guestUnavailable) return;
+    if (lock.current || !r?.is_open || guestUnavailable || access !== "allowed") return;
     lock.current = true;
     setBusy(true);
     setError("");
@@ -231,14 +247,19 @@ export default function Customer({
         );
       if (!validTable) throw Error("Please scan a valid table QR.");
       key.current ??= crypto.randomUUID();
-      const { error } = await db().rpc("place_order", {
+      const { error } = await db().rpc("submit_table_order", {
         restaurant_id: r!.id,
         table_no: tableNo,
         items: lines.map((f) => ({ id: f.id, quantity: cart[f.id] })),
         notes,
         request_id: key.current,
+        generation: generation.current,
       });
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("currently occupied")) setAccess("occupied");
+        if (error.message.includes("session ended")) setAccess("ended");
+        throw error;
+      }
       key.current = null;
       setCart({});
       setNotes("");
@@ -287,7 +308,7 @@ export default function Customer({
   if (loading)
     return (
       <main className="center">
-        <Leaf className="spin" />
+        <BrandMark className="spin" />
         <p>Setting your table…</p>
       </main>
     );
@@ -300,6 +321,13 @@ export default function Customer({
       </main>
     );
   const showOrdering = r.is_open && !guestUnavailable;
+  if (!demo && access !== "allowed") {
+    const message = access === "occupied" ? "This table is currently occupied. Please ask the staff for help."
+      : access === "ended" ? "This table session has ended. Scan the QR again to start a new order."
+      : access === "failed" || error ? "We couldn’t check this table. Please try again." : "Checking your table…";
+    return <main className="center"><h2 role="status">{message}</h2>{(access === "failed" || error) &&
+      <button className="secondary" onClick={() => location.reload()}>Check again</button>}</main>;
+  }
   return (
     <div
       className="customer"
@@ -310,7 +338,7 @@ export default function Customer({
           {r.logo_url ? (
             <img className="logo" src={r.logo_url} alt="" />
           ) : (
-            <Leaf />
+            <BrandMark />
           )}
           {r.name}
         </a>
@@ -709,9 +737,6 @@ export default function Customer({
           {toast}
         </div>
       )}
-      <footer>
-        POWERED BY VASHIBITE <span>Good food. Less waiting.</span>
-      </footer>
     </div>
   );
 }

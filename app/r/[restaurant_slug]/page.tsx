@@ -8,5 +8,6 @@ export default async function Page({
 }) {
   const p = await params,
     s = await searchParams;
-  return <Customer slug={p.restaurant_slug} tableNo={Number(s.table) || 0} />;
+  const tableNo = Number(s.table) || 0;
+  return <Customer key={p.restaurant_slug + ":" + tableNo} slug={p.restaurant_slug} tableNo={tableNo} />;
 }

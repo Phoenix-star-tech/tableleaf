@@ -1,9 +1,10 @@
 "use client";
+import { BrandLogo } from "@/components/brand-mark";
 import { useState } from "react";
 import Ads from "./ads";
 import Link from "next/link";
 import {
-  Leaf,
+
   Store,
   IndianRupee,
   ScanLine,
@@ -79,7 +80,7 @@ function exportDirectory(rows: Row[], days: number) {
   );
   const link = document.createElement("a");
   link.href = url;
-  link.download = `vashibite-restaurants-${days}d.csv`;
+  link.download = `lovescan-restaurants-${days}d.csv`;
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -133,7 +134,7 @@ export default function Report({ rows, days }: { rows: Row[]; days: number }) {
     <main className="platform">
       <header>
         <a href="/" className="brand">
-          <Leaf /> VashiBite
+          <BrandLogo />
         </a>
         <button
           className="admin-action"

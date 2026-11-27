@@ -1,7 +1,8 @@
 "use client";
+import { BrandLogo } from "@/components/brand-mark";
 import PasswordField from "@/components/password-field";
 import { useState } from "react";
-import { Leaf, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { db, configured } from "@/lib/supabase/client";
 export default function Login() {
   const [email, setEmail] = useState(""),
@@ -12,8 +13,7 @@ export default function Login() {
     <main className="login-layout">
       <section className="login-story">
         <a href="/" className="brand">
-          <Leaf />
-          VashiBite
+          <BrandLogo />
         </a>
         <p className="eyebrow">LESS ADMIN. MORE HOSPITALITY.</p>
         <h1>

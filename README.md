@@ -121,7 +121,7 @@ Privileged implementations live in the non-exposed `private` schema, with fixed 
 
 Status transitions:
 `Placed → Accepted → Preparing → Served → Paid`.
-Cancellation is allowed before Paid. Paid/cancelled orders are terminal. The database enforces all transitions, including the owner-only payment permission.
+For exclusive table ordering, apply `supabase/table_sessions.sql` after the admin reporting migrations, followed by `supabase/table_session_access.sql`. Deploy the matching frontend together with these migrations. The first successful submission claims the table using the browser's verified Supabase session ID. Additional submissions append to its bill. Accepting the updated ticket clears its New badges. An owner confirms payment to release the table. The server rejects checkout from an earlier table generation and settlement of a bill that gained items since the owner viewed it.
 
 The app’s table QR is a public menu link, not proof of physical presence. A copied QR can be used remotely. For busy public deployments, add table/session admission tokens if required and configure Supabase Auth abuse controls. Current database throttling is per guest and does not replace network-level abuse protection.
 
@@ -141,7 +141,7 @@ Prices are stored in INR, excluding tax. Discount applies before GST. Every orde
 
 Reports aggregate **Paid** orders by `paid_at`, in **Asia/Kolkata**, for up to 366 days. Sales include tax after discounts. Top-selling item revenue is before order-level tax/discount. Reports run in SQL across the full matching dataset, independent of UI pagination.
 
-UPI is a payment intent link/QR, **not** payment-gateway verification. Staff must verify funds were received, then an owner clicks **Mark paid**. Opening a UPI app does not mark an order paid. Each served order has its own payment amount; the app does not consolidate several orders into a single bill.
+UPI opens a payment link or QR for the served table bill. Staff verify receipt of funds before an owner selects **Mark as paid**. Settlement removes the live item rows, guest link, notes, requests and session binding. Anonymous bill totals and daily dish aggregates support sales reports.
 
 Confirm tax configuration with your accountant. The kitchen receipt is an operational ticket, not a full GST-compliant tax invoice with GSTIN/invoice numbering.
 
@@ -161,9 +161,9 @@ Serve over HTTPS in production. The manifest includes 192/512px icons and a mask
 2. In Vercel → Add New Project, import that repository.
 3. Choose **Next.js**. If the repository contains the outer ZIP folder, set Root Directory to `tableleaf`.
 4. Use `npm ci` for installation and `npm run build` for build; leave Next.js output defaults.
-5. Under Environment Variables, copy `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from your working local configuration. For Production, set `NEXT_PUBLIC_SITE_URL` to `https://tableleaf.vashik.in`. Leave it unset in Preview to test menus on each preview's own hostname.
+5. Under Environment Variables, copy `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from your working local configuration. For Production, set `NEXT_PUBLIC_SITE_URL` to `https://lovescan.vashik.in`. Leave it unset in Preview to test menus on each preview's own hostname.
 6. Deploy. Public environment variables are embedded at build time; **redeploy whenever you change them**.
-7. Under Vercel Project Settings → Domains, add `tableleaf.vashik.in`. At your DNS provider, add the record shown by Vercel for that hostname. Wait for Vercel to verify the domain and issue its HTTPS certificate. In Supabase Authentication → URL Configuration, set Site URL to the same HTTPS origin and allow any exact redirect destinations used for authentication.
+7. Under Vercel Project Settings → Domains, add `lovescan.vashik.in`. At your DNS provider, add the record shown by Vercel for that hostname. Wait for Vercel to verify the domain and issue its HTTPS certificate. In Supabase Authentication → URL Configuration, set Site URL to the same HTTPS origin and allow any exact redirect destinations used for authentication.
 8. Sign in, upload photos/logo, configure taxes/UPI, and generate table QRs using the final URL. Regenerate printed QRs if you change domain or restaurant slug.
 9. Test one order on a phone and the dashboard on a separate computer. Verify updates, sound, printing, UPI and staff isolation using the checklist below.
 
@@ -183,7 +183,7 @@ See **VERIFICATION.md** for checked behavior and remaining hosted tests.
 Production smoke test:
 
 1. In separate browsers: owner, kitchen, guest A, guest B.
-2. Guest A scans table 1 and places two orders. Guest B cannot see them.
+2. Guest A scans table 1 and submits twice. Verify both batches appear on one bill and added lines have New badges. Guest B scanning the occupied table should see the occupied message. After owner settlement, Guest B can scan again and start a fresh bill.
 3. Confirm popup, badge and enabled sound on the owner/kitchen dashboard.
 4. Move through Take order → Preparing → Served.
 5. Verify customer status and UPI bill; owner confirms payment.

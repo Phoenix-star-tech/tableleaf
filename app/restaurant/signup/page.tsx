@@ -1,8 +1,9 @@
 "use client";
+import { BrandLogo } from "@/components/brand-mark";
 import PasswordField from "@/components/password-field";
 import LocationSearch, {type Place} from "@/components/location-search";
 import { useState } from "react";
-import { Leaf, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import { db, configured } from "@/lib/supabase/client";
 
 function toSlug(name: string) {
@@ -29,8 +30,7 @@ export default function Signup() {
     <main className="login-layout">
       <section className="login-story">
         <a href="/" className="brand">
-          <Leaf />
-          VashiBite
+          <BrandLogo />
         </a>
         <p className="eyebrow">START YOUR JOURNEY.</p>
         <h1>

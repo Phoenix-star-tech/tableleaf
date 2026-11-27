@@ -1,8 +1,9 @@
 "use client";
+import { BrandLogo } from "@/components/brand-mark";
 import PasswordField from "@/components/password-field";
 
 import { useState, type FormEvent } from "react";
-import { Leaf, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { configured, db } from "@/lib/supabase/client";
 
 export default function AdminLogin({ restricted = false }: { restricted?: boolean }) {
@@ -31,7 +32,7 @@ export default function AdminLogin({ restricted = false }: { restricted?: boolea
   return (
     <main className="login-layout">
       <section className="login-story">
-        <a className="brand" href="/"><Leaf /> VashiBite</a>
+        <a className="brand" href="/"><BrandLogo /></a>
         <h1>Platform <em>admin.</em></h1>
       </section>
       <section className="login-form">

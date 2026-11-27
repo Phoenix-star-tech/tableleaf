@@ -411,7 +411,7 @@ function TableQR({
     const link =
       (process.env.NEXT_PUBLIC_SITE_URL ||
         (process.env.NEXT_PUBLIC_VERCEL_ENV === "production"
-          ? "https://tableleaf.vashik.in"
+          ? "https://lovescan.vashik.in"
           : location.origin)).replace(/\/$/, "") +
       "/r/" +
       r.slug +
@@ -428,6 +428,7 @@ function TableQR({
     <article className="qr-card">
       <p className="eyebrow">{r.name}</p>
       <h2>Table {table.table_no}</h2>
+      <p>{table.occupancy_status === "OCCUPIED" ? "Occupied" : "Available"}</p>
       {qr && <img src={qr} alt={"Menu QR for table " + table.table_no} />}
       <p>Scan. Order. Enjoy.</p>
       <a className="small muted" href={url} target="_blank" rel="noreferrer">
@@ -478,7 +479,7 @@ export function TablesManager({ restaurant: r, onError }: Props) {
   async function load() {
     const { data, error } = await db()
       .from("tables")
-      .select("*")
+      .select("*,occupancy_status")
       .eq("restaurant_id", r.id)
       .order("table_no");
     if (error) onError(error.message);
@@ -486,6 +487,8 @@ export function TablesManager({ restaurant: r, onError }: Props) {
   }
   useEffect(() => {
     load();
+    const timer = setInterval(load, 15000);
+    return () => clearInterval(timer);
   }, [r.id]);
   return (
     <>

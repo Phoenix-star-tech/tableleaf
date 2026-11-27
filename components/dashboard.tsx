@@ -1,7 +1,8 @@
 "use client";
+import { BrandLogo } from "@/components/brand-mark";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Leaf,
+
   LayoutDashboard,
   UtensilsCrossed,
   QrCode,
@@ -39,7 +40,7 @@ type Tab =
   | "Order history"
   | "Settings"
   | "Staff";
-const tabs: { name: Tab; icon: typeof Leaf }[] = [
+const tabs: { name: Tab; icon: typeof Bell }[] = [
   { name: "Live orders", icon: LayoutDashboard },
   { name: "Menu manager", icon: UtensilsCrossed },
   { name: "Tables & QR", icon: QrCode },
@@ -248,11 +249,15 @@ export default function Dashboard() {
   }, [r, load, notify]);
   async function update(o: Order, next: Status) {
     setPending(o.id);
-    const { error } = await db().rpc("change_order_status", {
-      order_id: o.id,
-      next_status: next,
-    });
+    const args = { oid: o.id, expected_revision: o.revision };
+    const client = db();
+    let result;
+    if (next === "cancelled") result = await client.rpc("cancel_table_order", args);
+    else if (next === "paid") result = await client.rpc("settle_table", args);
+    else result = await client.rpc("advance_table_order", { ...args, next_status: next });
+    const { error } = result;
     if (error) setError(error.message);
+    else if (next === "cancelled") setToast(`Order cancelled. Table ${o.table_no} is available.`);
     await load();
     setPending("");
   }
@@ -289,8 +294,7 @@ export default function Dashboard() {
     <div className="dashboard">
       <aside className="sidebar no-print">
         <a className="brand" href="/">
-          <Leaf />
-          VashiBite
+          <BrandLogo />
         </a>
         <div className="restaurant-switch">
           <span className="eyebrow">YOUR RESTAURANT</span>
@@ -559,6 +563,8 @@ export default function Dashboard() {
                       <div className="row" key={l.id}>
                         <span>
                           <b>{l.quantity}×</b> {l.name}
+                          {l.is_new && <strong className="new-dish">New</strong>}
+                          {l.batch_note && <small> · {l.batch_note}</small>}
                         </span>
                         <span>{money(l.quantity * l.unit_price)}</span>
                       </div>
@@ -597,7 +603,7 @@ export default function Dashboard() {
                         Mark served
                       </button>
                     )}
-                    {o.status === "served" && owner && (
+                    {owner && !["paid","cancelled"].includes(o.status) && (
                       <button
                         className="primary"
                         disabled={pending === o.id}
@@ -612,7 +618,16 @@ export default function Dashboard() {
                             update(o, "paid");
                         }}
                       >
-                        Mark paid
+                        Mark as paid
+                      </button>
+                    )}
+                    {!["paid", "cancelled"].includes(o.status) && (
+                      <button type="button" className="text-button danger" disabled={pending === o.id}
+                        onClick={() => {
+                          if (confirm(`Cancel the entire order for table ${o.table_no} and make the table available?`))
+                            void update(o, "cancelled");
+                        }}>
+                        Cancel order
                       </button>
                     )}
                     <button
@@ -622,18 +637,7 @@ export default function Dashboard() {
                     >
                       <Printer size={18} />
                     </button>
-                    {!["paid", "cancelled"].includes(o.status) && (
-                      <button
-                        className="text-button danger"
-                        disabled={pending === o.id}
-                        onClick={() => {
-                          if (confirm("Cancel this order?"))
-                            update(o, "cancelled");
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    )}
+
                   </div>
                 </article>
               ))}

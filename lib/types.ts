@@ -30,6 +30,7 @@ export type Food = {
   available: boolean;
 };
 export type Table = {
+  occupancy_status?: "AVAILABLE" | "OCCUPIED";
   id: string;
   restaurant_id: string;
   table_no: number;
@@ -38,12 +39,15 @@ export type Table = {
 export type Status =
   "placed" | "accepted" | "preparing" | "served" | "paid" | "cancelled";
 export type Line = {
+  is_new?: boolean;
+  batch_note?: string | null;
   id: string;
   name: string;
   quantity: number;
   unit_price: number;
 };
 export type Order = {
+  revision: number;
   id: string;
   restaurant_id: string;
   table_no: number;
