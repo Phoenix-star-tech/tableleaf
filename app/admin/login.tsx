@@ -31,7 +31,7 @@ export default function AdminLogin({ restricted = false }: { restricted?: boolea
   return (
     <main className="login-layout">
       <section className="login-story">
-        <a className="brand" href="/"><Leaf /> tableleaf</a>
+        <a className="brand" href="/"><Leaf /> VashiBite</a>
         <h1>Platform <em>admin.</em></h1>
       </section>
       <section className="login-form">

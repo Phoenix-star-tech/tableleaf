@@ -10,7 +10,7 @@ export default function Home() {
     <main className="landing">
       <nav className="brand">
         <Leaf />
-        tableleaf<span className="small">RESTAURANT OS</span>
+        VashiBite<span className="small">BY VASHIK TECHNOLOGIES</span>
       </nav>
       <div className="landing-grid">
         <section>

@@ -30,7 +30,7 @@ export default function Signup() {
       <section className="login-story">
         <a href="/" className="brand">
           <Leaf />
-          tableleaf
+          VashiBite
         </a>
         <p className="eyebrow">START YOUR JOURNEY.</p>
         <h1>
@@ -90,14 +90,25 @@ export default function Signup() {
                 const client = db();
                 const existing = await client.from("restaurants").select("id").eq("slug", slug).maybeSingle();
                 if (existing.error) throw existing.error;
-                if (existing.data) throw new Error("That menu URL is taken. Change the restaurant name.");
+                if (existing.data) throw new Error("That menu URL already exists. Sign in if this is your restaurant, or choose a different name.");
                 const { data, error } = await client.auth.signUp({
                   email: email.trim(),
                   password,
                   options: { data: { restaurant_name: restaurantName.trim(), restaurant_phone: phoneNumber, location_id: city.id, location_name: city.label } },
                 });
-                if (error) throw error;
-                if (!data.session) throw new Error("Immediate sign-in is unavailable. Contact the restaurant app administrator.");
+                if (error && error.code !== "user_already_exists" && error.code !== "email_exists") throw error;
+                if (!data.session) {
+                  const signIn = await client.auth.signInWithPassword({ email: email.trim(), password });
+                  if (signIn.error) throw signIn.error;
+                }
+                const restaurant = await client.rpc("complete_restaurant_signup", {
+                  p_name: restaurantName.trim(),
+                  p_phone: phoneNumber,
+                  p_location_id: city.id,
+                  p_location_name: city.label,
+                });
+                if (restaurant.error) throw new Error(restaurant.error.message);
+                if (!restaurant.data) throw new Error("Couldn’t finish creating the restaurant. Please try again.");
               } catch (error) {
                 setError(error instanceof Error ? error.message : "Unable to create the restaurant.");
                 setBusy(false);

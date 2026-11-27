@@ -2,10 +2,10 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Preferences } from "@/components/preferences";
 export const metadata: Metadata = {
-  title: "Tableleaf · Good food. Less waiting.",
+  title: "VashiBite · Good food. Less waiting.",
   description: "Scan, order and enjoy. Restaurant ordering, made simple.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Tableleaf" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "VashiBite" },
 };
 export const viewport: Viewport = {
   width: "device-width",

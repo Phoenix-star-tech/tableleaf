@@ -13,7 +13,7 @@ export default function Login() {
       <section className="login-story">
         <a href="/" className="brand">
           <Leaf />
-          tableleaf
+          VashiBite
         </a>
         <p className="eyebrow">LESS ADMIN. MORE HOSPITALITY.</p>
         <h1>
@@ -44,16 +44,30 @@ export default function Login() {
               setBusy(false);
               return;
             }
-            const { error } = await db().auth.signInWithPassword({
-              email,
-              password,
-            });
-            if (error) {
-              setError(error.message);
-              setBusy(false);
-            } else {
+            try {
+              const client = db();
+              const { data, error } = await client.auth.signInWithPassword({
+                email: email.trim(),
+                password,
+              });
+              if (error) throw error;
               const destination = new URLSearchParams(location.search).get("next");
-              location.href = destination === "admin" ? "/admin" : "/restaurant/dashboard";
+              if (destination === "admin") {
+                location.href = "/admin";
+                return;
+              }
+              const [owned, assigned] = await Promise.all([
+                client.from("restaurants").select("id").eq("owner_id", data.user.id).limit(1),
+                client.from("staff").select("restaurants!inner(id)").eq("user_id", data.user.id).limit(1),
+              ]);
+              if (owned.error || assigned.error) throw new Error("Couldn’t check your restaurant. Please try again.");
+              if (!owned.data?.length && !assigned.data?.length) {
+                throw new Error("No restaurant is linked to this login. Use Create your restaurant below, or ask your restaurant owner to add you as staff.");
+              }
+              location.href = "/restaurant/dashboard";
+            } catch (cause) {
+              setError(cause instanceof Error ? cause.message : "Couldn’t sign in. Please try again.");
+              setBusy(false);
             }
           }}
         >

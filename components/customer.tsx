@@ -50,6 +50,7 @@ export default function Customer({
     [error, setError] = useState(""),
     [toast, setToast] = useState(""),
     [busy, setBusy] = useState(false),
+    [guestUnavailable, setGuestUnavailable] = useState(false),
     [validTable, setValidTable] = useState(demo && tableNo > 0),
     [cartOpen, setCartOpen] = useState(false),
     [connected, setConnected] = useState(false);
@@ -104,22 +105,24 @@ export default function Customer({
         ]);
         if (f.error || c.error || tb.error)
           throw Error("Could not load the menu. Please try again.");
-        const {
-          data: { session },
-        } = await client.auth.getSession();
-        let user = session?.user;
-        if (!user) {
-          const { data, error } = await client.auth.signInAnonymously();
-          if (error) throw error;
-          user = data.user!;
-        }
-        uid.current = user.id;
         if (!active) return;
         setR(restaurant);
         setFoods(f.data || []);
         setCategories(c.data || []);
         setValidTable(!!tb.data);
-        if (tb.data) {
+        uid.current = "";
+        const {
+          data: { session },
+        } = await client.auth.getSession();
+        let user = session?.user;
+        if (!user) {
+          const { data } = await client.auth.signInAnonymously();
+          user = data.user ?? undefined;
+        }
+        if (!active) return;
+        uid.current = user?.id ?? "";
+        setGuestUnavailable(!user);
+        if (tb.data && user) {
           void client.rpc("record_menu_visit", { r: rid, t: tableNo }).then(({ error }) => {
             if (error) console.warn("Menu visit could not be recorded.");
           });
@@ -127,13 +130,13 @@ export default function Customer({
         async function refresh() {
           const { o, fo, ro } = await (async () => {
             const [o, fo, ro] = await Promise.all([
-              client
+              user ? client
                 .from("orders")
                 .select("*,order_items(*)")
                 .eq("restaurant_id", rid)
                 .eq("customer_id", uid.current)
                 .eq("table_no", tableNo)
-                .order("created_at", { ascending: false }),
+                .order("created_at", { ascending: false }) : { data: [], error: null },
               client
                 .from("menu_items")
                 .select("*")
@@ -152,6 +155,8 @@ export default function Customer({
         }
         await refresh();
         if (!active) return;
+        poll = setInterval(refresh, 15000);
+        if (!user) return;
         channel = client
           .channel("guest-" + rid + "-" + tableNo)
           .on(
@@ -187,7 +192,6 @@ export default function Customer({
           .subscribe((status) => {
             if (active) setConnected(status === "SUBSCRIBED");
           });
-        poll = setInterval(refresh, 15000);
       } catch (e) {
         if (active)
           setError(e instanceof Error ? e.message : "Unable to load menu");
@@ -216,7 +220,7 @@ export default function Customer({
     tax = Math.round((subtotal - discount) * Number(r?.tax_percent || 0)) / 100,
     total = subtotal - discount + tax;
   async function place() {
-    if (lock.current || !r?.is_open) return;
+    if (lock.current || !r?.is_open || guestUnavailable) return;
     lock.current = true;
     setBusy(true);
     setError("");
@@ -260,6 +264,7 @@ export default function Customer({
     }
   }
   async function request(kind: "waiter" | "bill") {
+    if (guestUnavailable) return;
     if (demo) {
       setToast("Sample menu — service requests are disabled.");
       return;
@@ -294,6 +299,7 @@ export default function Customer({
         <a href="/">Back home</a>
       </main>
     );
+  const showOrdering = r.is_open && !guestUnavailable;
   return (
     <div
       className="customer"
@@ -319,7 +325,7 @@ export default function Customer({
           disabled.
         </div>
       )}
-      <div className={r.is_open ? "menu-body" : "menu-body browse-only"}>
+      <div className={showOrdering ? "menu-body" : "menu-body browse-only"}>
         <div className="menu-main">
           {!demo && <MenuAds key={r.id} restaurant={r.id}/>}
           <section className="menu-hero">
@@ -338,7 +344,8 @@ export default function Customer({
             <div className="hero-dish">🍛</div>
           </section>
           {!r.is_open && <p className="menu-mode-note" role="status">{lang === "te" ? "మెనూ చూడండి. ఆర్డర్ కోసం సిబ్బందిని సంప్రదించండి." : lang === "hi" ? "मेन्यू देखें। ऑर्डर देने के लिए स्टाफ़ से बात करें।" : "Browse the menu. To order, please speak with our team."}</p>}
-          {r.is_open && <nav className="view-tabs">
+          {r.is_open && guestUnavailable && <p className="menu-mode-note" role="status">Online ordering is temporarily unavailable. You can browse the menu and order with our team.</p>}
+          {showOrdering && <nav className="view-tabs">
             <button
               className={view === "menu" ? "active" : ""}
               onClick={() => setView("menu")}
@@ -368,10 +375,10 @@ export default function Customer({
               </button>
             </div>
           )}
-          {r.is_open && !validTable && (
+          {showOrdering && !validTable && (
             <p className="error">Scan a valid table QR to order.</p>
           )}
-          {!r.is_open || view === "menu" ? (
+          {!showOrdering || view === "menu" ? (
             <>
               <div className="search-row">
                 <div className="search">
@@ -460,7 +467,7 @@ export default function Customer({
                           <strong>{money(f.price)}</strong>
                           {!f.available ? (
                             <span>{t.out}</span>
-                          ) : !r.is_open ? null : cart[f.id] ? (
+                          ) : !showOrdering ? null : cart[f.id] ? (
                             <div className="quantity">
                               <button
                                 aria-label={"Remove " + f.name}
@@ -580,7 +587,7 @@ export default function Customer({
             </section>
           )}
         </div>
-        {r.is_open && <aside className={"cart-panel " + (cartOpen ? "mobile-open" : "")}>
+        {showOrdering && <aside className={"cart-panel " + (cartOpen ? "mobile-open" : "")}>
           <button
             className="mobile-close"
             aria-label="Close cart"
@@ -691,7 +698,7 @@ export default function Customer({
           </p>
         </aside>}
       </div>
-      {r.is_open && <button className="mobile-cart primary" onClick={() => setCartOpen(true)}>
+      {showOrdering && <button className="mobile-cart primary" onClick={() => setCartOpen(true)}>
         <ShoppingBag size={18} />
         {count} items · {money(total)}
         <ArrowRight size={18} />
@@ -703,7 +710,7 @@ export default function Customer({
         </div>
       )}
       <footer>
-        POWERED BY TABLELEAF <span>Good food. Less waiting.</span>
+        POWERED BY VASHIBITE <span>Good food. Less waiting.</span>
       </footer>
     </div>
   );

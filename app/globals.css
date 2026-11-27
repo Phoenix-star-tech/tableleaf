@@ -898,6 +898,12 @@ input[type="color"] {
 .payment img {
   width: 150px;
 }
+.manual-payment { margin: 12px 0; width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.manual-payment summary { cursor: pointer; font-weight: 600; }
+.manual-payment dl { margin: 12px 0; }
+.manual-payment dt { color: var(--muted); font-size: 12px; }
+.manual-payment dd { margin: 0 0 6px; overflow-wrap: anywhere; user-select: all; }
+.manual-payment [role="status"] { display: block; }
 .dashboard {
   display: flex;
   min-height: 100vh;

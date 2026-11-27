@@ -264,12 +264,15 @@ export default function Dashboard() {
   if (!r)
     return (
       <main className="center">
-        <h2>One more step.</h2>
-        <p>
-          No restaurant is assigned to this account. Run the owner bootstrap SQL
-          in the setup guide or ask your owner to add you.
-        </p>
-        {error && <p className="error">{error}</p>}
+        <h2>{error ? "Couldn’t load your restaurant" : "No restaurant linked"}</h2>
+        {error ? (
+          <>
+            <p role="alert">{error}</p>
+            <button className="primary" onClick={() => location.reload()}>Try again</button>
+          </>
+        ) : (
+          <p>If you just signed up as an owner, contact support with your signup email and restaurant name. If you’re joining as staff, ask your restaurant owner to add this email.</p>
+        )}
         <button
           className="secondary"
           onClick={async () => {
@@ -287,7 +290,7 @@ export default function Dashboard() {
       <aside className="sidebar no-print">
         <a className="brand" href="/">
           <Leaf />
-          tableleaf
+          VashiBite
         </a>
         <div className="restaurant-switch">
           <span className="eyebrow">YOUR RESTAURANT</span>
