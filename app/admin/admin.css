@@ -1,0 +1,217 @@
+.platform {
+  max-width: 1240px;
+  margin: auto;
+  padding: 0 clamp(16px, 4vw, 56px) 44px;
+}
+.platform header,
+.platform-title,
+.filters,
+.platform summary,
+.platform li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.platform header {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.platform header span,
+.platform nav {
+  background: var(--soft);
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+.platform-title {
+  margin: 40px 0 26px;
+  flex-wrap: wrap;
+}
+.platform h1 {
+  font:
+    500 clamp(32px, 5vw, 56px)/1.1 Georgia,
+    serif;
+  margin: 0;
+}
+.platform p,
+.platform small,
+.platform dt,
+.platform footer {
+  color: var(--muted);
+}
+.platform nav {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+}
+.platform nav a {
+  padding: 5px 10px;
+  border-radius: 7px;
+}
+.platform nav [aria-current] {
+  background: #245b47;
+  color: white;
+}
+.platform-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.platform article,
+.directory {
+  padding: clamp(14px, 2vw, 25px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.platform article:first-child {
+  background: #214e3c;
+  color: white;
+}
+.platform article:first-child p {
+  color: #d4e8db;
+}
+.platform article p {
+  margin: 14px 0 2px;
+}
+.platform article strong {
+  font-size: clamp(18px, 2.4vw, 32px);
+  overflow-wrap: anywhere;
+}
+.directory {
+  margin: 24px 0;
+}
+.directory h2 {
+  font-size: 24px;
+}
+.filters {
+  margin: 14px 0 20px;
+}
+.filters input {
+  flex: 1;
+  min-width: 0;
+}
+.filters select {
+  width: auto;
+}
+.platform details {
+  border-top: 1px solid var(--line);
+}
+.platform summary {
+  cursor: pointer;
+  padding: 16px 0;
+  list-style: none;
+}
+.platform summary div:first-child {
+  flex: 1;
+}
+.platform small {
+  display: block;
+}
+.restaurant-info {
+  background: var(--soft);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 12px;
+}
+.restaurant-info dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 0 0 20px;
+}
+.restaurant-info dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.restaurant-info ul {
+  padding: 0;
+}
+.restaurant-info li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.platform footer {
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .platform-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+  .platform summary {
+    gap: 8px;
+  }
+  .platform-title {
+    margin-top: 25px;
+  }
+  .filters {
+    flex-wrap: wrap;
+  }
+}
+
+.admin-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.admin-section-head h2,
+.admin-section-head p {
+  margin: 0;
+}
+.admin-section-head select {
+  width: auto;
+}
+.admin-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--ink);
+}
+.admin-action:hover:not(:disabled) {
+  background: var(--soft);
+}
+.admin-ranking {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  margin: 18px 0 0;
+}
+.platform .admin-ranking li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  overflow-wrap: anywhere;
+}
+.admin-ranking span {
+  font-variant-numeric: tabular-nums;
+}
+.admin-bar {
+  grid-column: 1 / -1;
+  height: 7px;
+  border-radius: 6px;
+  background: var(--soft);
+  overflow: hidden;
+}
+.admin-bar div {
+  height: 100%;
+  background: #488769;
+  border-radius: inherit;
+}
+.platform details[open] summary svg {
+  transform: rotate(180deg);
+}
+@media (max-width: 600px) {
+  .filters input {
+    flex-basis: 100%;
+  }
+  .filters select {
+    flex: 1;
+    min-width: 0;
+  }
+}
